@@ -106,11 +106,11 @@ function Register() {
                         />
                     </div>
                     {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
-                    <button
+                    <button>
                         type="submit"
                         disabled={loading}
                         className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors"
-                    >
+                    
                         {loading ? 'Registering...' : 'Register'}
                     </button>
                     <div className="text-center mt-4 text-gray-300">

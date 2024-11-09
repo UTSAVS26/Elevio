@@ -1,14 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth0 } from "@auth0/auth0-react";
 
 const Header = () => {
+  const { user, loginWithRedirect, isAuthenticated, logout } = useAuth0(); 
   const navItems = [
     { name: 'About', href: '#About' },
     { name: 'Workouts', href: '#Workouts' },
     { name: 'Benefits', href: '#Benefits' },
     { name: 'Start', href: '#Start' },
-    { name: 'Dashboard', href: '/dashboard' }
+    // { name: 'Dashboard', href: '/dashboard' }
   ];
 
   const handleScroll = (e, href) => {
@@ -52,7 +54,7 @@ const Header = () => {
           <line x1="10" x2="10" y1="1" y2="4" />
           <line x1="14" x2="14" y1="1" y2="4" />
         </svg>
-        <span className="sr-only">FitLife App</span>
+        <span className="sr-only">Flexion App</span>
       </motion.a>
 
       <nav className="flex-1 flex px-6">
@@ -78,28 +80,41 @@ const Header = () => {
               )}
             </motion.li>
           ))}
+          {isAuthenticated && (
+            <motion.li
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: navItems.length * 0.1 }}
+            >
+              <Link className="text-sm font-medium hover:underline underline-offset-4" to="/dashboard">
+                Dashboard
+              </Link>
+            </motion.li>
+          )}
         </ul>
       </nav>
 
-      <div className="flex items-center gap-2">
-        <Link to="/login">
-          <motion.button
-            className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Login
-          </motion.button>
-        </Link>
-        <Link to="/register">
-          <motion.button
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Register
-          </motion.button>
-        </Link>
+      <div className="flex items-center gap-2">          
+        { isAuthenticated ? (
+            <motion.button
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={e => logout()}
+            >
+              Logout
+            </motion.button>
+          ) : (
+            <motion.button
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={(e) => loginWithRedirect()}
+            >
+              Login / Sign Up
+            </motion.button>
+          )
+        }
       </div>
     </motion.header>
   );

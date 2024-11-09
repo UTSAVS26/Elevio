@@ -55,7 +55,7 @@ export default function ActivityGraph() {
             <Line
               type="monotone"
               dataKey="value"
-              stroke="#8b5cf6"
+              stroke="#5BC280"
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 8 }}

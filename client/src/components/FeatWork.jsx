@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import hiit from '../assets/hiit.jpg';
 import muscle from '../assets/muscle.jpg';
 import yoga from '../assets/yoga.jpg';
+import { Link } from 'react-router-dom';
+
 
 const WorkoutCard = ({ title, duration, intensity, description, imageSrc, altText }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -48,6 +50,7 @@ const WorkoutCard = ({ title, duration, intensity, description, imageSrc, altTex
             >
               <p className="text-gray-600 mb-4">{duration} | {intensity}</p>
               <p className="mb-4">{description}</p>
+              <Link to="/login">
               <motion.button 
                 className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors mt-auto"
                 whileHover={{ scale: 1.1 }}
@@ -55,6 +58,7 @@ const WorkoutCard = ({ title, duration, intensity, description, imageSrc, altTex
               >
                 Start Workout
               </motion.button>
+              </Link>
             </motion.div>
           )}
         </AnimatePresence>
