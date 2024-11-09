@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import Sidebar from '../components/sidebar';
+import Sidebar from '../components/Sidebar';
 import ActivityMetrics from '../components/ActivityMetrics';
 import ActivityGraph from '../components/ActivityGraph';
 // import ProgressChart from '../components/ProgressChart';
@@ -45,23 +45,13 @@ export default function Dashboard() {
               <h1 className="text-2xl font-bold">Welcome Mike, Good Morning</h1>
             </div>
             <div className="flex items-center gap-4">
-              <motion.button
-                className="p-2 text-gray-500 hover:text-gray-700"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                </svg>
-              </motion.button>
-              <motion.img
-                src="/placeholder.svg?height=40&width=40"
-                alt="Profile"
-                className="w-10 h-10 rounded-full"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-              />
+                <motion.button
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                >
+                    Edit
+                </motion.button>
             </div>
           </motion.header>
 

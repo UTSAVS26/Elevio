@@ -52,7 +52,7 @@ export default function TrainerSection() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
         >
-          Popular Trainer
+          Popular Workouts
         </motion.h2>
         <motion.button
           className="text-sm text-purple-600"
