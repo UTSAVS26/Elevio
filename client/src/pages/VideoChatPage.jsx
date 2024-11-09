@@ -1,14 +1,15 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
-import { Mic, MicOff, Video, VideoOff, Phone, PhoneOff, Send } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import React, { useState, useRef, useEffect } from 'react';
+import { Mic, MicOff, Video, VideoOff, Phone, PhoneOff, Send } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-// VideoStream Component for capturing and sending video frames
-function VideoStream({ isVideoOn }) {
-  const videoRef = useRef(null)
+function VideoStream({ isVideoOn, onDetectedExercise }) {
+  const videoRef = useRef(null);
 
   useEffect(() => {
+    let frameCaptureInterval;
+
     const startVideo = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: isVideoOn });
@@ -16,15 +17,15 @@ function VideoStream({ isVideoOn }) {
           videoRef.current.srcObject = stream;
         }
 
-        async function sendFrameToBackend(frame) {
-          const canvas = document.createElement('canvas');
-          const video = document.querySelector('video'); // Your video element or stream
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const sendFrameToBackend = async (frame) => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = frame.videoWidth;
+            canvas.height = frame.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
 
-          canvas.toBlob(async (blob) => {
+            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg'));
             const formData = new FormData();
             formData.append('file', blob, 'frame.jpg');
 
@@ -33,19 +34,23 @@ function VideoStream({ isVideoOn }) {
               body: formData,
             });
 
-            const data = await response.json();
-            if (data.predicted_exercise) {
-              console.log('Predicted Exercise:', data.predicted_exercise);
+            if (response.ok) {
+              const data = await response.json();
+              if (data.predicted_exercise) {
+                onDetectedExercise(data.predicted_exercise); // Trigger only when exercise is detected
+              }
             }
-          }, 'image/jpeg');
-        }
+          } catch (error) {
+            // Log only the first error to prevent repeated spamming
+            console.error("Error sending frame to backend:", error);
+          }
+        };
 
-        function captureVideoFrames() {
-          const video = document.querySelector('video');
-          setInterval(() => {
-            sendFrameToBackend(video);
-          }, 1000 / 10); // Send 30 frames per second
-        }
+        frameCaptureInterval = setInterval(() => {
+          if (videoRef.current) {
+            sendFrameToBackend(videoRef.current);
+          }
+        }, 1000 / 10); // 10 frames per second
       } catch (error) {
         console.error("Error accessing the camera:", error);
       }
@@ -56,7 +61,14 @@ function VideoStream({ isVideoOn }) {
     } else if (videoRef.current && videoRef.current.srcObject) {
       videoRef.current.srcObject.getTracks().forEach(track => track.stop());
     }
-  }, [isVideoOn]);
+
+    return () => {
+      clearInterval(frameCaptureInterval);
+      if (videoRef.current && videoRef.current.srcObject) {
+        videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [isVideoOn, onDetectedExercise]);
 
   return <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />;
 }
@@ -84,7 +96,6 @@ export default function VideoChatPage() {
     if (inputMessage.trim()) {
       setMessages([...messages, { id: messages.length + 1, sender: 'You', text: inputMessage }]);
       setInputMessage('');
-      // Simulate AI response
       setTimeout(() => {
         setMessages(prevMessages => [
           ...prevMessages,
@@ -92,7 +103,14 @@ export default function VideoChatPage() {
         ]);
       }, 1000);
     }
-  }
+  };
+
+  const handleExerciseDetected = (exercise) => {
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { id: prevMessages.length + 1, sender: 'System', text: `Detected Exercise: ${exercise}` },
+    ]);
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
@@ -123,7 +141,7 @@ export default function VideoChatPage() {
               )}
             </div>
             <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-              <VideoStream isVideoOn={isVideoOn} />
+              <VideoStream isVideoOn={isVideoOn} onDetectedExercise={handleExerciseDetected} />
               {!isChatActive && (
                 <div className="absolute inset-0 flex items-center justify-center text-white">
                   Your video will appear here
