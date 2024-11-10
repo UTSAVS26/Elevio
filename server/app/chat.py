@@ -15,10 +15,10 @@ pose_detector = mp_pose.Pose()
 pipe = pipeline("text-generation", model="openai-community/gpt2")
 
 # Text-to-Speech Engine Setup
-def text_to_speech(text):
-    engine = pyttsx3.init()
-    engine.say(text)
-    #engine.runAndWait()
+# def text_to_speech(text):
+#     engine = pyttsx3.init()
+#     engine.say(text)
+#     #engine.runAndWait()
 
 # Function to extract pose from image frame using MediaPipe
 def extract_pose(image):
@@ -35,8 +35,8 @@ def extract_pose(image):
 
 # Cross-Entropy Model for Posture Evaluation
 class PoseAlignmentModel(nn.Module):
-    def _init_(self, num_landmarks):
-        super(PoseAlignmentModel, self)._init_()
+    def __init__(self, num_landmarks):  # Corrected the __init__ method
+        super(PoseAlignmentModel, self).__init__()
         # Define the model layers
         self.fc1 = nn.Linear(num_landmarks * 6, 128)  # 6 = 3 coordinates per landmark * 2 poses (pose1 + pose2)
         self.fc2 = nn.Linear(128, 64)
@@ -101,41 +101,3 @@ def resp(image_frame1, image_frame2):
         text_to_speech(correction_text)
     else:
         print("Posture is correct!")
-
-# # Setup OpenCV to capture video (replace with your video source)
-# base_path = "/Users/ajaychawla/.cache/kagglehub/datasets/hasyimabdillah/workoutfitness-video/versions/5/deadlift"
-# video_files = [file for file in os.listdir(base_path) if file.endswith(".mp4")]
-
-# if len(video_files) < 2:
-#     print("Insufficient video files in the directory.")
-# else:
-#     video_file1 = video_files[0]
-#     video_file2 = video_files[1]
-#     cap1 = cv2.VideoCapture(os.path.join(base_path, video_file1))
-#     cap2 = cv2.VideoCapture(os.path.join(base_path, video_file2))
-
-#     if not cap1.isOpened():
-#         print(f"Error opening video file: {video_file1}")
-#     if not cap2.isOpened():
-#         print(f"Error opening video file: {video_file2}")
-#     count = 0
-#     while(cap1.isOpened() and cap2.isOpened()):
-#         # Capture frame-by-frame
-#         ret1, frame1 = cap1.read()
-#         ret2, frame2 = cap2.read()
-#         if (count%5==0):
-#             if ret1 and ret2:
-#                 # Process consecutive frames from both video files
-#                 main(frame1, frame2)
-#         count+=1
-        
-#         # Optional: Display the video stream (for debugging)
-#         #cv2.imshow('Video Frame 1', frame1)
-#         #cv2.imshow('Video Frame 2', frame2)
-        
-#         if cv2.waitKey(1) & 0xFF == ord('q'):
-#             break
-
-#     cap1.release()
-#     cap2.release()
-    #cv2.destroyAllWindows()
