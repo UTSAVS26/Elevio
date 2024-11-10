@@ -1,79 +1,8 @@
-'use client'
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Mic, MicOff, Video, VideoOff, Phone, PhoneOff, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import VideoStream from './VideoStream';
 
-function VideoStream({ isVideoOn, onDetectedExercise }) {
-  const videoRef = useRef(null);
-
-  useEffect(() => {
-    let frameCaptureInterval;
-
-    const startVideo = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: isVideoOn });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-
-        const sendFrameToBackend = async (frame) => {
-          try {
-            const canvas = document.createElement('canvas');
-            canvas.width = frame.videoWidth;
-            canvas.height = frame.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
-
-            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg'));
-            const formData = new FormData();
-            formData.append('file', blob, 'frame.jpg');
-
-            const response = await fetch('http://localhost:8000/upload_video_frame', {
-              method: 'POST',
-              body: formData,
-            });
-
-            if (response.ok) {
-              const data = await response.json();
-              if (data.predicted_exercise) {
-                onDetectedExercise(data.predicted_exercise); // Trigger only when exercise is detected
-              }
-            }
-          } catch (error) {
-            // Log only the first error to prevent repeated spamming
-            console.error("Error sending frame to backend:", error);
-          }
-        };
-
-        frameCaptureInterval = setInterval(() => {
-          if (videoRef.current) {
-            sendFrameToBackend(videoRef.current);
-          }
-        }, 1000 / 10); // 10 frames per second
-      } catch (error) {
-        console.error("Error accessing the camera:", error);
-      }
-    };
-
-    if (isVideoOn) {
-      startVideo();
-    } else if (videoRef.current && videoRef.current.srcObject) {
-      videoRef.current.srcObject.getTracks().forEach(track => track.stop());
-    }
-
-    return () => {
-      clearInterval(frameCaptureInterval);
-      if (videoRef.current && videoRef.current.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [isVideoOn, onDetectedExercise]);
-
-  return <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />;
-}
-
-// Main VideoChatPage Component
 export default function VideoChatPage() {
   const [isChatActive, setIsChatActive] = useState(false);
   const [isMicOn, setIsMicOn] = useState(true);
@@ -84,8 +13,10 @@ export default function VideoChatPage() {
     { id: 3, sender: 'AI', text: 'Hi there! How can I assist you today?' },
   ]);
   const [inputMessage, setInputMessage] = useState('');
-  const aiVideoRef = useRef(null);
   const chatContainerRef = useRef(null);
+
+  // Define aiVideoRef if it is actually needed, otherwise remove
+  const aiVideoRef = useRef(null);
 
   const toggleChat = () => setIsChatActive(!isChatActive);
   const toggleMic = () => setIsMicOn(!isMicOn);
@@ -97,9 +28,9 @@ export default function VideoChatPage() {
       setMessages([...messages, { id: messages.length + 1, sender: 'You', text: inputMessage }]);
       setInputMessage('');
       setTimeout(() => {
-        setMessages(prevMessages => [
+        setMessages((prevMessages) => [
           ...prevMessages,
-          { id: prevMessages.length + 1, sender: 'AI', text: 'I received your message. How can I help further?' }
+          { id: prevMessages.length + 1, sender: 'AI', text: 'I received your message. How can I help further?' },
         ]);
       }, 1000);
     }
@@ -127,7 +58,7 @@ export default function VideoChatPage() {
           <div className="md:col-span-2 space-y-4">
             <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
               <video
-                ref={aiVideoRef}
+                ref={aiVideoRef} // Defined here
                 autoPlay
                 playsInline
                 loop
