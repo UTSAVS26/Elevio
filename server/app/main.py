@@ -28,7 +28,30 @@ mp_pose = mp.solutions.pose
 pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
 
 # Exercise label mappings
-exercise_labels = {0: "Jumping Jacks", 1: "Push-Ups", 2: "Squats"}
+exercise_labels = {
+    0: "Barbell Biceps Curl",
+    1: "Bench Press",
+    2: "Chest Fly Machine",
+    3: "Deadlift",
+    4: "Decline Bench Press",
+    5: "Hammer Curl",
+    6: "Hip Thrust",
+    7: "Incline Bench Press",
+    8: "Lat Pulldown",
+    9: "Lateral Raise",
+    10: "Leg Extension",
+    11: "Leg Raises",
+    12: "Plank",
+    13: "Pull Up",
+    14: "Push-Up",
+    15: "Romanian Deadlift",
+    16: "Russian Twist",
+    17: "Shoulder Press",
+    18: "Squat",
+    19: "T Bar Row",
+    20: "Tricep Pushdown",
+    21: "Tricep Dips"
+}
 
 def extract_pose_landmarks(frame):
     """Extracts pose landmarks from the frame using MediaPipe."""
