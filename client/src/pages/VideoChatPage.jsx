@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import axios from 'axios';
 import { Mic, MicOff, Video, VideoOff, Phone, PhoneOff, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import VideoStream from './VideoStream';
@@ -14,33 +15,79 @@ export default function VideoChatPage() {
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const chatContainerRef = useRef(null);
-
-  // Define aiVideoRef if it is actually needed, otherwise remove
   const aiVideoRef = useRef(null);
 
   const toggleChat = () => setIsChatActive(!isChatActive);
   const toggleMic = () => setIsMicOn(!isMicOn);
   const toggleVideo = () => setIsVideoOn(!isVideoOn);
 
-  const handleSendMessage = (e) => {
+  const handleExerciseDetected = (exercise) => {
+    setMessages((prevMessages) => [
+        ...prevMessages,
+        { id: prevMessages.length + 1, sender: 'System', text: `Detected Exercise: ${exercise}` },
+    ]);
+    setExerciseVideo(`archive/${exercise}/${exercise}_1.mp4`);  // Update video based on detected exercise
+  };
+
+  // Function to send frames to FastAPI for pose evaluation
+  const sendFramesForPoseCorrection = async (frame1, frame2) => {
+    try {
+      const formData = new FormData();
+      formData.append('frame1', frame1);
+      formData.append('frame2', frame2);
+
+      const response = await axios.post('/process_frames', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      const correctionText = response.data.correction_text || response.data.message;
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { id: prevMessages.length + 1, sender: 'AI', text: correctionText },
+      ]);
+    } catch (error) {
+      console.error('Error fetching pose correction:', error);
+    }
+  };
+
+  // Simulate capturing frames from VideoStream and sending to API every few seconds
+  useEffect(() => {
+    const captureFrames = async () => {
+      // Here, frame1 and frame2 would be captured from the VideoStream component
+      // For example purposes, we use placeholders
+      const frame1 = new Blob(); // Replace with actual frame data
+      const frame2 = new Blob(); // Replace with actual frame data
+      await sendFramesForPoseCorrection(frame1, frame2);
+    };
+
+    // Capture frames every 5 seconds
+    const intervalId = setInterval(() => {
+      if (isVideoOn) captureFrames();
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [isVideoOn]);
+
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     if (inputMessage.trim()) {
       setMessages([...messages, { id: messages.length + 1, sender: 'You', text: inputMessage }]);
       setInputMessage('');
-      setTimeout(() => {
+
+      try {
+        const response = await axios.post('/api/get-model-response', { message: inputMessage });
         setMessages((prevMessages) => [
           ...prevMessages,
-          { id: prevMessages.length + 1, sender: 'AI', text: 'I received your message. How can I help further?' },
+          { id: prevMessages.length + 1, sender: 'AI', text: response.data.reply },
         ]);
-      }, 1000);
+      } catch (error) {
+        console.error('Error fetching model response:', error);
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { id: prevMessages.length + 1, sender: 'AI', text: "I'm having trouble processing your request right now." },
+        ]);
+      }
     }
-  };
-
-  const handleExerciseDetected = (exercise) => {
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      { id: prevMessages.length + 1, sender: 'System', text: `Detected Exercise: ${exercise}` },
-    ]);
   };
 
   return (
@@ -57,27 +104,12 @@ export default function VideoChatPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2 space-y-4">
             <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-              <video
-                ref={aiVideoRef} // Defined here
-                autoPlay
-                playsInline
-                loop
-                className="absolute inset-0 w-full h-full object-cover"
-                src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-              />
-              {!isChatActive && (
-                <div className="absolute inset-0 flex items-center justify-center text-white">
-                  AI video will appear here
-                </div>
-              )}
+              <video ref={aiVideoRef} autoPlay playsInline loop className="absolute inset-0 w-full h-full object-cover" src={exerciseVideo} />
+              {!isChatActive && <div className="absolute inset-0 flex items-center justify-center text-white">AI video will appear here</div>}
             </div>
             <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
               <VideoStream isVideoOn={isVideoOn} onDetectedExercise={handleExerciseDetected} />
-              {!isChatActive && (
-                <div className="absolute inset-0 flex items-center justify-center text-white">
-                  Your video will appear here
-                </div>
-              )}
+              {!isChatActive && <div className="absolute inset-0 flex items-center justify-center text-white">Your video will appear here</div>}
             </div>
             <div className="flex justify-center space-x-4">
               <button onClick={toggleMic} className={isMicOn ? "bg-blue-500 hover:bg-blue-600" : "bg-red-500 hover:bg-red-600"}>
@@ -86,7 +118,7 @@ export default function VideoChatPage() {
               <button onClick={toggleVideo} className={isVideoOn ? "bg-blue-500 hover:bg-blue-600" : "bg-red-500 hover:bg-red-600"}>
                 {isVideoOn ? <Video /> : <VideoOff />}
               </button>
-              <button onClick={() => { toggleChat(); }} className={isChatActive ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"}>
+              <button onClick={() => toggleChat()} className={isChatActive ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"}>
                 {isChatActive ? <PhoneOff /> : <Phone />}
               </button>
             </div>
